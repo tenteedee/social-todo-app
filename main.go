@@ -3,13 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tenteedee/social-todo-app/types"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	ItemController "github.com/tenteedee/social-todo-app/controllers"
 )
 
 func main() {
@@ -30,64 +29,13 @@ func main() {
 	{
 		items := v1.Group("/items")
 		{
-			items.GET("")
-			items.GET("/:id", GetItemById(db))
-			items.POST("", CreateItem(db))
-			items.PUT("/:id")
-			items.DELETE("/:id")
+			items.GET("", ItemController.GetItems(db))
+			items.GET("/:id", ItemController.GetItemById(db))
+			items.POST("", ItemController.CreateItem(db))
+			items.PUT("/:id", ItemController.UpdateItem(db))
+			items.DELETE("/:id", ItemController.DeleteItem(db))
 		}
 	}
 
 	r.Run(":3000")
-}
-
-func CreateItem(db *gorm.DB) func(*gin.Context) {
-	return func(c *gin.Context) {
-		var data types.TodoItemCreation
-
-		if err := c.ShouldBind(&data); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		if err := db.Create(&data).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Item created successfully",
-			"data":    data.Id,
-		})
-
-	}
-}
-
-func GetItemById(db *gorm.DB) func(*gin.Context) {
-	return func(c *gin.Context) {
-		var data types.TodoItem
-
-		id, err := strconv.Atoi(c.Param("id"))
-
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-
-		if err := db.First(&data, id).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"data": data,
-		})
-	}
 }
