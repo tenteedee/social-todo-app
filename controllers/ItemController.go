@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -62,11 +63,36 @@ func GetItemById(db *gorm.DB) func(*gin.Context) {
 	}
 }
 
-func GetItems(db *gorm.DB) func(*gin.Context) {
+func ListItems(db *gorm.DB) func(*gin.Context) {
 	return func(c *gin.Context) {
-		var data []types.TodoItem
+		var paging types.Paging
 
-		if err := db.Find(&data).Error; err != nil {
+		if err := c.ShouldBind(&paging); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		paging.Process()
+		fmt.Println(paging.Page, paging.Limit, paging.Total)
+
+		var data = []types.TodoItem{}
+
+		db = db.Where("status != ?", "deleted")
+
+		if err := db.Table(types.TodoItem{}.TableName()).Count(&paging.Total).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		if err := db.
+			Order("created_at asc").
+			Offset((paging.Page - 1) * paging.Limit).
+			Limit(paging.Limit).
+			Find(&data).
+			Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
@@ -74,7 +100,10 @@ func GetItems(db *gorm.DB) func(*gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"data": data,
+			"total": paging.Total,
+			"page":  paging.Page,
+			"limit": paging.Limit,
+			"data":  data,
 		})
 	}
 }

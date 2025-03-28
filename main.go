@@ -29,7 +29,7 @@ func main() {
 	{
 		items := v1.Group("/items")
 		{
-			items.GET("", ItemController.GetItems(db))
+			items.GET("", ItemController.ListItems(db))
 			items.GET("/:id", ItemController.GetItemById(db))
 			items.POST("", ItemController.CreateItem(db))
 			items.PUT("/:id", ItemController.UpdateItem(db))
