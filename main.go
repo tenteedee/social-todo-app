@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenteedee/social-todo-app/types"
@@ -22,34 +22,7 @@ func main() {
 		log.Fatal("failed to connect database")
 	}
 
-	fmt.Print(db)
-
-	now := time.Now().UTC()
-
-	item := types.TodoItem{
-		Id:          1,
-		Title:       "Buy Milk",
-		Images:      "milk.jpg",
-		Description: "Buy a gallon of milk from the store",
-		Status:      "doing",
-		CreatedAt:   &now,
-		UpdatedAt:   &now,
-	}
-
-	// jsonData, err := json.MarshalIndent(item, "", "  ")
-
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// println(string(jsonData))
-
-	// i := types.TodoItem{}
-	// if err := json.Unmarshal([]byte(jsonData), &i); err != nil {
-	// 	panic(err)
-	// }
-
-	// fmt.Println(i)
+	// fmt.Print(db)
 
 	r := gin.Default()
 
@@ -58,18 +31,12 @@ func main() {
 		items := v1.Group("/items")
 		{
 			items.GET("")
-			items.GET("/:id")
+			items.GET("/:id", GetItemById(db))
 			items.POST("", CreateItem(db))
 			items.PUT("/:id")
 			items.DELETE("/:id")
 		}
 	}
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": item,
-		})
-	})
 
 	r.Run(":3000")
 }
@@ -97,5 +64,30 @@ func CreateItem(db *gorm.DB) func(*gin.Context) {
 			"data":    data.Id,
 		})
 
+	}
+}
+
+func GetItemById(db *gorm.DB) func(*gin.Context) {
+	return func(c *gin.Context) {
+		var data types.TodoItem
+
+		id, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		if err := db.First(&data, id).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"data": data,
+		})
 	}
 }
