@@ -11,3 +11,13 @@ type TodoItem struct {
 	CreatedAt   *time.Time `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
 }
+
+type TodoItemCreation struct {
+	Id          int    `json:"-" gorm:"column:id"`
+	Title       string `json:"title" gorm:"column:title"`
+	Description string `json:"description" gorm:"column:description"`
+}
+
+func (TodoItemCreation) TableName() string {
+	return "items"
+}
