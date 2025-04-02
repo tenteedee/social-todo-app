@@ -34,7 +34,7 @@ func main() {
 			items.GET("/:id", gin_api.GetItemById(db))
 			items.POST("", gin_api.CreateItem(db))
 			items.PUT("/:id", gin_api.UpdateItem(db))
-			items.DELETE("/:id", ItemController.DeleteItem(db))
+			items.DELETE("/:id", gin_api.DeleteItem(db))
 		}
 	}
 
