@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	ItemController "github.com/tenteedee/social-todo-app/controllers"
+	"github.com/tenteedee/social-todo-app/modules/transport/gin_api"
 )
 
 func main() {
@@ -30,9 +31,9 @@ func main() {
 		items := v1.Group("/items")
 		{
 			items.GET("", ItemController.ListItems(db))
-			items.GET("/:id", ItemController.GetItemById(db))
-			items.POST("", ItemController.CreateItem(db))
-			items.PUT("/:id", ItemController.UpdateItem(db))
+			items.GET("/:id", gin_api.GetItemById(db))
+			items.POST("", gin_api.CreateItem(db))
+			items.PUT("/:id", gin_api.UpdateItem(db))
 			items.DELETE("/:id", ItemController.DeleteItem(db))
 		}
 	}
